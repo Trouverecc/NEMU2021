@@ -26,7 +26,7 @@ typedef struct {
 
         struct{
             uint32_t eax, ecx, edx, ebx, esp, ebp, esi, edi;
-		}
+		};
 	};
 
     
