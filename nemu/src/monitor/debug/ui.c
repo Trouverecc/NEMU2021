@@ -52,10 +52,13 @@ static int cmd_info(char *args)  {
 	
     if(strcmp(arg,"r") == 0){  
 		int i=0; 
-        while(i<8)  
-            printf("%s \t%x \t%d\n",regsl[i],cpu.gpr[i]._32,cpu.gpr[i]._32);  
-            printf("$eip \t%x \t%d\n", cpu.eip, cpu.eip); 
+        while(i<8){
+            printf("%s \t%x \t%d\n",regsl[i],cpu.gpr[i]._32,cpu.gpr[i]._32); 
 			i++;
+		}  
+         
+            printf("$eip \t%x \t%d\n", cpu.eip, cpu.eip); 
+			
 
     }  
     return 0;  
