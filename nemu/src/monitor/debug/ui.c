@@ -47,6 +47,43 @@ static int cmd_si(char *args) {
 	return 0;
 }
 
+static int cmd_info(char *args)  {  
+    char *arg=strtok(NULL," "); 
+	
+    if(strcmp(arg,"r") == 0){  
+		int i=0; 
+        while(i<8)  
+            printf("%s \t%x \t%d\n",regsl[i],cpu.gpr[i]._32,cpu.gpr[i]._32);  
+            printf("$eip \t%x \t%d\n", cpu.eip, cpu.eip); 
+			i++;
+
+    }  
+    return 0;  
+} 
+
+
+static int cmd_x(char *args){  
+    char *N = strtok(NULL," ");  
+    char *EXPR = strtok(NULL," ");  
+    int len;  
+    lnaddr_t address;  
+      
+    sscanf(N, "%d", &len);  
+    sscanf(EXPR, "%x", &address);  
+      
+    printf("0x%x:",address);  
+    int i=0;
+    while(i < len){  
+        printf("%08x ",lnaddr_read(address,4));  
+        address += 4;  
+		i++;
+    }  
+    printf("\n");  
+    return 0;  
+}
+
+
+
 static struct {
 	char *name;
 	char *description;
@@ -56,6 +93,8 @@ static struct {
 	{ "c", "Continue the execution of the program", cmd_c },
 	{ "q", "Exit NEMU", cmd_q },
     { "si", "Step into implementation of N instructions after the suspension of execution.When N is notgiven,the default is 1.", cmd_si},
+	{ "info", "r for print register state\nw for print watchpoint information", cmd_info},
+	{ "x", "Calculate the value of the expression and regard the result as the starting memory address.", cmd_x},
 	/* TODO: Add more commands */
 
 };
