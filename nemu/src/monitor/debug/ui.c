@@ -57,7 +57,7 @@ static int cmd_info(char *args)  {
 			i++;
 		}  
          
-            printf("$eip \t%x \t%d\n", cpu.eip, cpu.eip); 
+            printf("eip \t%x \t%d\n", cpu.eip, cpu.eip); 
 			
 
     }  
