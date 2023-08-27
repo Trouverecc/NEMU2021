@@ -85,16 +85,7 @@ static int cmd_x(char *args){
     return 0;  
 }
 
-static int cmd_p(char *args){
-  bool success;
-  uint32_t res = expr(args, &success);
-  if(success){
-    printf("%u\n", res);
-	return 0;  
-  }
-  printf("Invalid input!\n");
-  return 0;
-}
+
 
 static struct {
 	char *name;
@@ -107,7 +98,7 @@ static struct {
     { "si", "Step into implementation of N instructions after the suspension of execution.When N is notgiven,the default is 1.", cmd_si},
 	{ "info", "r for print register state\nw for print watchpoint information", cmd_info},
 	{ "x", "Calculate the value of the expression and regard the result as the starting memory address.", cmd_x},
-    { "p", "Expression value", cmd_p},
+    
 	/* TODO: Add more commands */
 
 };
