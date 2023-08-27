@@ -7,6 +7,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
+#define TestCorrect(x) if(x){printf("Invalid Command!\n");return 0;}
 void cpu_exec(uint32_t);
 
 /* We use the `readline' library to provide more flexibility to read from stdin. */
@@ -85,7 +86,17 @@ static int cmd_x(char *args){
     return 0;  
 }
 
-
+static int cmd_p(char *args) {
+	TestCorrect(args == NULL);
+	uint32_t ans;
+	bool flag;
+	ans = expr(args, &flag);
+	TestCorrect(!flag) 
+	else {
+		printf("%d\n", ans);
+	}
+	return 0;
+}
 
 static struct {
 	char *name;
@@ -98,7 +109,7 @@ static struct {
     { "si", "Step into implementation of N instructions after the suspension of execution.When N is notgiven,the default is 1.", cmd_si},
 	{ "info", "r for print register state\nw for print watchpoint information", cmd_info},
 	{ "x", "Calculate the value of the expression and regard the result as the starting memory address.", cmd_x},
-    
+    { "p", "Calculate expressions", cmd_p},
 	/* TODO: Add more commands */
 
 };
