@@ -106,7 +106,7 @@ static int cmd_p(char *args) {
 		for(i=i-1;i>=0;i--)
 		    printf("%c",s[i]);
 		printf("(");
-		printf("%d\n", ans);
+		printf("%d", ans);
 		printf(")");
 	}
 	return 0;
