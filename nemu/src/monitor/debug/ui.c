@@ -92,7 +92,7 @@ static int cmd_p(char *args) {
 	int i=0;
 	bool flag;
 	ans = expr(args, &flag);
-
+    b=ans;
 	TestCorrect(!flag) 
 	else {
 		char s[100];
@@ -108,7 +108,7 @@ static int cmd_p(char *args) {
 		    printf("%c",s[i]);
 		printf("(");
 		printf("%d", b);
-		printf(")");
+		printf(")\n");
 	}
 	return 0;
 }
