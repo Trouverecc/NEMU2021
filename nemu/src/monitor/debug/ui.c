@@ -88,10 +88,11 @@ static int cmd_x(char *args){
 
 static int cmd_p(char *args) {
 	TestCorrect(args == NULL);
-	uint32_t ans;
+	uint32_t ans,b;
 	int i=0;
 	bool flag;
 	ans = expr(args, &flag);
+
 	TestCorrect(!flag) 
 	else {
 		char s[100];
@@ -106,7 +107,7 @@ static int cmd_p(char *args) {
 		for(i=i-1;i>=0;i--)
 		    printf("%c",s[i]);
 		printf("(");
-		printf("%d", ans);
+		printf("%d", b);
 		printf(")");
 	}
 	return 0;
