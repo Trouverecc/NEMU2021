@@ -5,9 +5,12 @@
  */
 #include <sys/types.h>
 #include <regex.h>
+#include <ctype.h>
+//#include <stulib.h>
 
 enum {
-	NOTYPE = 256, EQ
+        NOTYPE = 256, EQ, NEQ, LESSEQ, GREATEREQ, NOTEQUAL,
+        AND, OR, HEXNUM, NUM, REGNAME, NEG, REF,
 
 	/* TODO: Add more token types */
 
@@ -22,9 +25,28 @@ static struct rule {
 	 * Pay attention to the precedence level of different rules.
 	 */
 
-	{" +",	NOTYPE},				// spaces
-	{"\\+", '+'},					// plus
-	{"==", EQ}						// equal
+	{" +",	NOTYPE},		
+	{"==", EQ},
+	{"!=", NEQ},
+	{">=", LESSEQ},
+	{"<=", GREATEREQ},
+	{">", '>'},	
+	{"<", '<'},
+	{"!=", NOTEQUAL},
+	{"\\&\\&", AND},
+	{"\\|\\|", OR},
+	{"\\!", '!'},
+	{"0x[0-9a-f]+", HEXNUM},
+	{"[0-9]+", NUM},
+	{"\\$[a-z]{2,3}",REGNAME},
+	{"\\+", '+'},					
+	{"\\-", '-'},
+	{"\\*", '*'},
+	{"\\/", '/'},
+	{"\\%", '%'},
+	{"\\(", '('},
+	{"\\)", ')'},	
+
 };
 
 #define NR_REGEX (sizeof(rules) / sizeof(rules[0]) )
@@ -77,11 +99,23 @@ static bool make_token(char *e) {
 				 * to record the token in the array `tokens'. For certain types
 				 * of tokens, some extra actions should be performed.
 				 */
-
+				
 				switch(rules[i].token_type) {
-					default: panic("please implement me");
+					case NOTYPE: 
+						break;
+					case NUM:
+					case HEXNUM:
+					case REGNAME:
+						tokens[nr_token].type = rules[i].token_type;
+						sprintf(tokens[nr_token].str, "%.*s", substr_len, substr_start);
+						nr_token++;
+						break;				
+					//default: panic("please implement me");
+					default:
+					    tokens[nr_token++].type = rules[i].token_type;
+					break;
 				}
-
+                
 				break;
 			}
 		}
@@ -91,7 +125,6 @@ static bool make_token(char *e) {
 			return false;
 		}
 	}
-
 	return true; 
 }
 
