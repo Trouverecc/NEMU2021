@@ -66,7 +66,7 @@ static int cmd_info(char *args)  {
 } 
 
 
-static int cmd_x(char *args){  
+/*static int cmd_x(char *args){  
     char *N = strtok(NULL," ");  
     char *EXPR = strtok(NULL," ");  
     int len;  
@@ -84,6 +84,22 @@ static int cmd_x(char *args){
     }  
     printf("\n");  
     return 0;  
+}*/
+static int cmd_x(char* args){
+    char *N=strtok(NULL," ");
+    char *EXPR=strtok(NULL,"@");
+    int len;
+    sscanf(N,"%d",&len);
+    bool flag = false;
+    lnaddr_t addr = expr(EXPR,&flag);
+    int i=0;
+    while(i<len){
+        printf("0x%08x ",lnaddr_read(addr,4)); 
+        addr+=4;
+        i++;
+    }
+    printf("\n");
+    return 0;
 }
 
 static int cmd_p(char *args) {
