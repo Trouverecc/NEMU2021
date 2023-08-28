@@ -129,6 +129,38 @@ static int cmd_p(char *args) {
 	return 0;
 }
 
+static int cmd_w(char *args){
+	if(args){
+		int p;
+		p = set_watchpoints(args);
+		if(p != -1)
+			printf("Set watchpoint %d.\n", p);
+		else if( p == -1)
+			printf("Fail to set watchpoint.\n");
+	}
+	else 
+	 	printf("Please input right instructions!\n");
+	return 0;
+}
+
+static int cmd_d(char *args){
+	
+	char *temp; 
+	temp = strtok(NULL, " ");
+	int num;
+	sscanf(temp, "%d", &num);
+	bool ifsuccess;
+	//printf("1!!!!!!!!!!\n");
+	ifsuccess = delete_watchpoints(num);
+	//printf("2!!!!!!!!!!\n");
+	if(ifsuccess)
+		printf("Success to delete watchpoint %d.\n", num);
+	else 
+		printf("Fail to delete watchpoint %d.\n", num);
+	return 0;
+		
+}
+
 static struct {
 	char *name;
 	char *description;
@@ -141,6 +173,8 @@ static struct {
 	{ "info", "r for print register state\nw for print watchpoint information", cmd_info},
 	{ "x", "Calculate the value of the expression and regard the result as the starting memory address.", cmd_x},
     { "p", "Calculate expressions", cmd_p},
+	{"w", "Set watchpoints", cmd_w},
+	{"d", "Delete watchpoints", cmd_d},
 	/* TODO: Add more commands */
 
 };
