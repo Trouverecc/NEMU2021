@@ -1,22 +1,20 @@
 #ifndef __WATCHPOINT_H__
 #define __WATCHPOINT_H__
 
-#include "common.h"
+#include "common.h" 
 
 typedef struct watchpoint {
 	int NO;
-	char str[32];
-	uint32_t old_val;
-	uint32_t new_val;
 	struct watchpoint *next;
 
 	/* TODO: Add more members if necessary */
-
+    char *expr;
+	uint32_t new_val;
+	uint32_t old_val;
 
 } WP;
-int set_watchpoints(char* expr);
-bool delete_watchpoints(int NO);
-WP* ask_head();
-void print_watchpoints();
-
+int set_watchpoint(char *e);
+bool delete_watchpoint(int NO);
+void list_watchpoint();
+WP* scan_watchpoint();
 #endif

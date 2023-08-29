@@ -50,8 +50,8 @@ static int cmd_si(char *args) {
 
 static int cmd_info(char *args)  {  
     char *arg=strtok(NULL," "); 
-	
-    if(strcmp(arg,"r") == 0){  
+	if(arg!=NULL){
+        if(strcmp(arg,"r") == 0){  
 		int i=0; 
         while(i<8){
             printf("%s \t%x \t%d\n",regsl[i],cpu.gpr[i]._32,cpu.gpr[i]._32); 
@@ -61,7 +61,9 @@ static int cmd_info(char *args)  {
             printf("eip \t%x \t%d\n", cpu.eip, cpu.eip); 
 			
 
-    }  
+    }  else if (strcmp(arg,"w")==0)list_watchpoint();
+	}
+    
     return 0;  
 } 
 
@@ -129,37 +131,25 @@ static int cmd_p(char *args) {
 	return 0;
 }
 
-static int cmd_w(char *args){
-	if(args){
-		int p;
-		p = set_watchpoints(args);
-		if(p != -1)
-			printf("Set watchpoint %d.\n", p);
-		else if( p == -1)
-			printf("Fail to set watchpoint.\n");
+static int cmd_w(char *args) {
+	if(args) {
+		int NO = set_watchpoint(args);
+		if(NO != -1) { printf("Set watchpoint #%d\n", NO); }
+		else { printf("Bad expression\n"); }
 	}
-	else 
-	 	printf("Please input right instructions!\n");
 	return 0;
 }
 
-static int cmd_d(char *args){
-	
-	char *temp; 
-	temp = strtok(NULL, " ");
-	int num;
-	sscanf(temp, "%d", &num);
-	bool ifsuccess;
-	//printf("1!!!!!!!!!!\n");
-	ifsuccess = delete_watchpoints(num);
-	//printf("2!!!!!!!!!!\n");
-	if(ifsuccess)
-		printf("Success to delete watchpoint %d.\n", num);
-	else 
-		printf("Fail to delete watchpoint %d.\n", num);
+static int cmd_d(char *args) {
+	int NO;
+	sscanf(args, "%d", &NO);
+	if(!delete_watchpoint(NO)) {
+		printf("Watchpoint #%d does not exist\n", NO);
+	}
+
 	return 0;
-		
 }
+
 
 static struct {
 	char *name;
