@@ -62,6 +62,10 @@ entry: $(ENTRY)
 run: $(nemu_BIN) $(USERPROG) entry
 	$(call git_commit, "run")
 	$(nemu_BIN) $(USERPROG)
+count:	
+	find ./nemu/ -name "*.[ch]" | xargs wc -l
+	find ./nemu/ -name "*.[ch]" | xargs grep "^." | wc -l
+
 
 gdb: $(nemu_BIN) $(USERPROG) entry
 	$(call git_commit, "gdb")
