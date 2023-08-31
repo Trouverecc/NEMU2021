@@ -1,7 +1,7 @@
 testcase_CFLAGS_EXTRA := -m32 -fno-builtin -fno-stack-protector \
 						-Wno-format -I$(LIB_COMMON_DIR) -I$(LIBC_INC_DIR)
 
-$(eval $(call make_common_rules,testcase,$(testcase_CFLAGS_EXTRA)))
+$(eval $(call make_common_rules_old,testcase,$(testcase_CFLAGS_EXTRA)))
 
 # redefine testcase_BIN
 testcase_BIN := $(testcase_COBJS:.o=)
@@ -20,16 +20,16 @@ $(testcase_OBJ_DIR)/mov: % : %.o
 # point instructions. gcc 6 will generate floating point instructions
 # for passing floating point arguments with -O0.
 $(testcase_OBJ_DIR)/integral.o: testcase/src/integral.c
-	$(call make_command, $(CC), $(testcase_CFLAGS) -O2, cc $@, $<)
+	$(call make_command, $(CC4), $(testcase_CFLAGS) -O2, cc $@, $<)
 
 $(testcase_OBJ_DIR)/quadratic-eq.o: testcase/src/quadratic-eq.c
-	$(call make_command, $(CC), $(testcase_CFLAGS) -O2, cc $@, $<)
+	$(call make_command, $(CC4), $(testcase_CFLAGS) -O2, cc $@, $<)
 
 
 # These rules are used to generate print-FLOAT program run under
 # GNU/Linux run-time.
 $(testcase_OBJ_DIR)/print-FLOAT-linux.o: testcase/src/print-FLOAT.c
-	$(call make_command, $(CC), $(testcase_CFLAGS) -DLINUX_RT, cc $@, $<)
+	$(call make_command, $(CC4), $(testcase_CFLAGS) -DLINUX_RT, cc $@, $<)
 
 $(testcase_OBJ_DIR)/print-FLOAT-linux: % : \
 	$(LIBC_LIB_DIR)/crt1.o \

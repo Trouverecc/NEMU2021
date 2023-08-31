@@ -7,8 +7,8 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-#define TestCorrect(x) if(x){printf("Invalid Command!\n");return 0;}
 void cpu_exec(uint32_t);
+void display_reg();
 
 /* We use the `readline' library to provide more flexibility to read from stdin. */
 char* rl_gets() {
@@ -28,6 +28,98 @@ char* rl_gets() {
 	return line_read;
 }
 
+/* TODO: Add single step */
+static int cmd_si(char *args) {
+	char *arg = strtok(NULL, " ");
+	int i = 1;
+
+	if(arg != NULL) {
+		sscanf(arg, "%d", &i);
+	}
+	cpu_exec(i);
+	return 0;
+}
+
+/* TODO: Add info command */
+static int cmd_info(char *args) {
+	char *arg = strtok(NULL, " ");
+
+	if(arg != NULL) {
+		if(strcmp(arg, "r") == 0) {
+			display_reg();
+		}
+		else if(strcmp(arg, "w") == 0) {
+			list_watchpoint();
+		}
+	}
+	return 0;
+}
+
+/* Add examine memory */
+static int cmd_x(char *args) {
+	char *arg = strtok(NULL, " ");
+	int n;
+	swaddr_t addr;
+	int i;
+
+	if(arg != NULL) {
+		sscanf(arg, "%d", &n);
+
+		bool success;
+		addr = expr(arg + strlen(arg) + 1, &success);
+		if(success) { 
+			for(i = 0; i < n; i ++) {
+				if(i % 4 == 0) {
+					printf("0x%08x: ", addr);
+				}
+
+				printf("0x%08x ", swaddr_read(addr, 4));
+				addr += 4;
+				if(i % 4 == 3) {
+					printf("\n");
+				}
+			}
+			printf("\n");
+		}
+		else { printf("Bad expression\n"); }
+
+	}
+	return 0;
+}
+
+/* Add expression evaluation  */
+static int cmd_p(char *args) {
+	bool success;
+
+	if(args) {
+		uint32_t r = expr(args, &success);
+		if(success) { printf("0x%08x(%d)\n", r, r); }
+		else { printf("Bad expression\n"); }
+	}
+	return 0;
+}
+
+/* Add set watchpoint  */
+static int cmd_w(char *args) {
+	if(args) {
+		int NO = set_watchpoint(args);
+		if(NO != -1) { printf("Set watchpoint #%d\n", NO); }
+		else { printf("Bad expression\n"); }
+	}
+	return 0;
+}
+
+/* Add delete watchpoint */
+static int cmd_d(char *args) {
+	int NO;
+	sscanf(args, "%d", &NO);
+	if(!delete_watchpoint(NO)) {
+		printf("Watchpoint #%d does not exist\n", NO);
+	}
+
+	return 0;
+}
+
 static int cmd_c(char *args) {
 	cpu_exec(-1);
 	return 0;
@@ -39,128 +131,6 @@ static int cmd_q(char *args) {
 
 static int cmd_help(char *args);
 
-static int cmd_si(char *args) {
-	int step;
-	char *arg = strtok(NULL," ");
-	if (args == NULL) step = 1;
-	else sscanf(arg, "%d", &step);
-	cpu_exec(step);
-	return 0;
-}
-
-static int cmd_info(char *args)  {  
-    char *arg=strtok(NULL," "); 
-	
-    if(strcmp(arg,"r") == 0){  
-		int i=0; 
-        while(i<8){
-            printf("%s \t%x \t%d\n",regsl[i],cpu.gpr[i]._32,cpu.gpr[i]._32); 
-			i++;
-		}  
-         
-            printf("eip \t%x \t%d\n", cpu.eip, cpu.eip); 
-			
-
-    }  
-    return 0;  
-} 
-
-
-/*static int cmd_x(char *args){  
-    char *N = strtok(NULL," ");  
-    char *EXPR = strtok(NULL," ");  
-    int len;  
-    lnaddr_t address;  
-      
-    sscanf(N, "%d", &len);  
-    sscanf(EXPR, "%x", &address);  
-      
-    printf("0x%x:",address);  
-    int i=0;
-    while(i < len){  
-        printf("%08x ",lnaddr_read(address,4));  
-        address += 4;  
-		i++;
-    }  
-    printf("\n");  
-    return 0;  
-}*/
-static int cmd_x(char* args){
-    char *N=strtok(NULL," ");
-    char *EXPR=strtok(NULL,"@");
-    int len;
-    sscanf(N,"%d",&len);
-    bool flag = false;
-    lnaddr_t addr = expr(EXPR,&flag);
-    int i=0;
-    while(i<len){
-        printf("0x%08x ",lnaddr_read(addr,4)); 
-        addr+=4;
-        i++;
-    }
-    printf("\n");
-    return 0;
-}
-
-static int cmd_p(char *args) {
-	TestCorrect(args == NULL);
-	uint32_t ans,b;
-	int i=0;
-	bool flag;
-	ans = expr(args, &flag);
-    b=ans;
-	TestCorrect(!flag) 
-	else {
-		char s[100];
-		while(ans){
-			if(ans %16>=10)
-			    s[i]=ans %16+55;
-			else
-			    s[i]=ans %16+48;
-			i++;
-			ans=ans/16;	
-		}
-		for(i=i-1;i>=0;i--)
-		    printf("%c",s[i]);
-		printf("(");
-		printf("%d", b);
-		printf(")\n");
-	}
-	return 0;
-}
-
-static int cmd_w(char *args){
-	if(args){
-		int p;
-		p = set_watchpoints(args);
-		if(p != -1)
-			printf("Set watchpoint %d.\n", p);
-		else if( p == -1)
-			printf("Fail to set watchpoint.\n");
-	}
-	else 
-	 	printf("Please input right instructions!\n");
-	return 0;
-}
-
-static int cmd_d(char *args){
-	
-	char *temp; 
-	temp = strtok(NULL, " ");
-	int num;
-	sscanf(temp, "%d", &num);
-	bool ifsuccess;
-	//printf("1!!!!!!!!!!\n");
-	ifsuccess = delete_watchpoints(num);
-	//printf("2!!!!!!!!!!\n");
-	if(ifsuccess)
-		printf("Success to delete watchpoint %d.\n", num);
-	else 
-		printf("Fail to delete watchpoint %d.\n", num);
-	return 0;
-		
-}
-
 static struct {
 	char *name;
 	char *description;
@@ -168,14 +138,15 @@ static struct {
 } cmd_table [] = {
 	{ "help", "Display informations about all supported commands", cmd_help },
 	{ "c", "Continue the execution of the program", cmd_c },
-	{ "q", "Exit NEMU", cmd_q },
-    { "si", "Step into implementation of N instructions after the suspension of execution.When N is notgiven,the default is 1.", cmd_si},
-	{ "info", "r for print register state\nw for print watchpoint information", cmd_info},
-	{ "x", "Calculate the value of the expression and regard the result as the starting memory address.", cmd_x},
-    { "p", "Calculate expressions", cmd_p},
-	{"w", "Set watchpoints", cmd_w},
-	{"d", "Delete watchpoints", cmd_d},
+	{ "q", "Exit NEMU", cmd_q }, 
+
 	/* TODO: Add more commands */
+        { "si", "Single step", cmd_si },
+        { "info", "info r - print register values; info w - show watch point state", cmd_info },
+	{ "x", "Examine memory", cmd_x },
+        { "p", "Evaluate the value of expression", cmd_p },
+	{ "w", "Set watchpoint", cmd_w },
+	{ "d", "Delete watchpoint", cmd_d }
 
 };
 

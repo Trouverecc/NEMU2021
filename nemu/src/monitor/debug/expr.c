@@ -5,15 +5,13 @@
  */
 #include <sys/types.h>
 #include <regex.h>
-#include <ctype.h>
-//#include <stulib.h>
+#include <stdlib.h>
 
 enum {
-        NOTYPE = 256, EQ, NEQ, LESSEQ, GREATEREQ, NOTEQUAL,
-        AND, OR, HEXNUM, NUM, REGNAME, NEG, REF,
+	NOTYPE = 256, EQ
 
 	/* TODO: Add more token types */
-
+        , NUM, NEQ, OR, AND, REG, REF, NEG
 };
 
 static struct rule {
@@ -25,28 +23,22 @@ static struct rule {
 	 * Pay attention to the precedence level of different rules.
 	 */
 
-	{" +",	NOTYPE},		
-	{"==", EQ},
-	{"!=", NEQ},
-	{">=", LESSEQ},
-	{"<=", GREATEREQ},
-	{">", '>'},	
-	{"<", '<'},
-	{"!=", NOTEQUAL},
-	{"\\&\\&", AND},
-	{"\\|\\|", OR},
-	{"\\!", '!'},
-	{"0x[0-9a-f]+", HEXNUM},
-	{"[0-9]+", NUM},
-	{"\\$[a-z]{2,3}",REGNAME},
-	{"\\+", '+'},					
-	{"\\-", '-'},
+	{" +",	NOTYPE},				// spaces
+	{"\\+", '+'},					// plus
+	{"==", EQ},						// equal
+	{"0x[0-9a-fA-F]{1,8}", NUM},			// hex
+	{"[0-9]{1,10}", NUM},					// dec
+	{"\\$[a-z]{1,31}", REG},				// register names 
+	{"-", '-'},
 	{"\\*", '*'},
-	{"\\/", '/'},
-	{"\\%", '%'},
+	{"/", '/'},
+	{"%", '%'},
+	{"!=", NEQ},
+	{"&&", AND},
+	{"\\|\\|", OR},
+	{"!", '!'},
 	{"\\(", '('},
-	{"\\)", ')'},	
-
+	{"\\)", ')'} 
 };
 
 #define NR_REGEX (sizeof(rules) / sizeof(rules[0]) )
@@ -99,23 +91,16 @@ static bool make_token(char *e) {
 				 * to record the token in the array `tokens'. For certain types
 				 * of tokens, some extra actions should be performed.
 				 */
-				
+
 				switch(rules[i].token_type) {
-					case NOTYPE: 
-						break;
-					case NUM:
-					case HEXNUM:
-					case REGNAME:
-						tokens[nr_token].type = rules[i].token_type;
-						sprintf(tokens[nr_token].str, "%.*s", substr_len, substr_start);
-						nr_token++;
-						break;				
+                                        case NOTYPE: break;
+                                        case NUM:
 					//default: panic("please implement me");
-					default:
-					    tokens[nr_token++].type = rules[i].token_type;
-					break;
+                                        case REG: sprintf(tokens[nr_token].str, "%.*s", substr_len, substr_start);
+					default: tokens[nr_token].type = rules[i].token_type;
+							 nr_token ++;
 				}
-                
+
 				break;
 			}
 		}
@@ -125,219 +110,132 @@ static bool make_token(char *e) {
 			return false;
 		}
 	}
+
 	return true; 
 }
 
-static bool ifmatch;
+/*TODO: Expression evaluation*/
 
-static bool check_if_match(int p, int q){
-	int lecounter, i;
-	lecounter = 0;
-	for(i = p; i <= q; i++){
-		if(tokens[i].type == '(')
-			lecounter++;
-		else if(tokens[i].type == ')')
-			lecounter--;
-		if(lecounter < 0){
-			return false;
-		}
-	}
-	if(lecounter == 0)
-        return true;
-	else 
-		return false;
-}
-static int op_value(int op_type){
-	switch(op_type){
-		case '!':
-		case NEG:
-		case REF:
-			return 0;
-		case '*':
-		case '/':
-		case '%':
-			return 1;
-		case '+':
-		case '-':
-			return 2;
-		case EQ:
-		case NEQ:
-			return 4;
-		case AND:
-			return 7;
-		case OR:
-			return 8;
-		default: 
-			ifmatch = false;
-			return -1;
-			
+static int op_prec(int t) {
+	switch(t) {
+		case '!': case NEG: case REF: return 0;
+		case '*': case '/': case '%': return 1;
+		case '+': case '-': return 2;
+		case EQ: case NEQ: return 4;
+		case AND: return 8;
+		case OR: return 9;
+		default: assert(0);
 	}
 }
 
-static int op_cmp(int op_type1, int op_type2){
-	return op_value(op_type1) - op_value(op_type2);
+static inline int op_prec_cmp(int t1, int t2) {
+	return op_prec(t1) - op_prec(t2);
 }
 
-static bool check_parentheses(int p, int q){
-	if(ifmatch == false){
-		return false;
-	}
-	int lecounter, i;
-	lecounter = 0;
-	bool res;
-	res = true;
-	if(tokens[p].type != '(' || tokens[q].type != ')')
-		return false;
-	ifmatch = check_if_match(p, q);
-	for(i = p + 1; i < q; i++){
-		if(tokens[i].type == '('){
-			lecounter++;
-		}
-		else if(tokens[i].type == ')'){
-			lecounter--;
-		}
-		if(lecounter < 0){
-			res = false;
-			
-		}
-	}
-	if(lecounter == 0 && res == true)
-		res = true;
-	else if(lecounter != 0 || res == false)
-		res = false;
-	return res;
-}
-
-static int find_dominant_op(int p, int q){
-	if(ifmatch == false){
-		return 0;
-	}
-	int lbrac_count;
+static int find_dominated_op(int s, int e, bool *success) {
 	int i;
-	int tmp_op;
-	lbrac_count = 0;
-	tmp_op = -1;
-	for(i = p; i <= q; i++){
-		switch(tokens[i].type){
-			case REGNAME:
-			case NUM:
-			case HEXNUM:
-			case '!':
-			case NEG:
-			case REF:
+	int bracket_level = 0;
+	int dominated_op = -1;
+	for(i = s; i <= e; i ++) {
+		switch(tokens[i].type) {
+			case REG: case NUM: break;
+
+			case '(': 
+				bracket_level ++; 
 				break;
-			case '(':
-				lbrac_count++;
-				break;
-			case ')':
-				lbrac_count--;
-				if(lbrac_count < 0){
-					ifmatch = false;
+
+			case ')': 
+				bracket_level --; 
+				if(bracket_level < 0) {
+					*success = false;
 					return 0;
 				}
 				break;
+
 			default:
-				if(lbrac_count == 0){
-					if(tmp_op == -1 || op_cmp(tokens[tmp_op].type, tokens[i].type) < 0 ||op_cmp(tokens[tmp_op].type, tokens[i].type) == 0){
-						tmp_op = i;
+				if(bracket_level == 0) {
+					if(dominated_op == -1 || 
+							op_prec_cmp(tokens[dominated_op].type, tokens[i].type) < 0 ||
+							(op_prec_cmp(tokens[dominated_op].type, tokens[i].type) == 0 && 
+							 tokens[i].type != '!' && tokens[i].type != '~' &&
+							 tokens[i].type != NEG && tokens[i].type != REF) ) {
+						dominated_op = i;
 					}
 				}
 				break;
 		}
 	}
-	return tmp_op;
-} 
 
-uint32_t eval(int p, int q){
-	if(ifmatch == true){
-		if(p > q){
-			ifmatch = false;
+	*success = (dominated_op != -1);
+	return dominated_op;
+}
+
+uint32_t get_reg_val(const char*, bool *);
+
+static uint32_t eval(int s, int e, bool *success) {
+	if(s > e) {
+		// bad expression
+		*success = false;
+		return 0;
+	}
+	else if(s == e) {
+		// single token
+		uint32_t val;
+		switch(tokens[s].type) {
+			case REG: val = get_reg_val(tokens[s].str + 1, success);	// +1 to skip '$'
+					  if(!*success) { return 0; }
+					  break;
+
+			case NUM: val = strtol(tokens[s].str, NULL, 0); break;
+
+			default: assert(0);
 		}
-		else if(p == q){
-			uint32_t res;
-			switch(tokens[p].type){
-				case NUM:
-					sscanf(tokens[p].str, "%d", &res);
-					return res;
-				case HEXNUM:
-					sscanf(tokens[p].str + 2, "%x", &res);
-					return res;	
-				case REGNAME:
-					if(strcmp(tokens[p].str, "$eip") == 0){
-						return cpu.eip;
-					}	
-					int i;
-					for(i = R_EAX; i <= R_EDI; i++){
-						if(strcmp(tokens[p].str + 1, regsl[i]) == 0){
-							return cpu.gpr[i]._32;
-						}
-					}
-					for(i = R_AX; i <= R_DI; i++){
-						if(strcmp(tokens[p].str + 1, regsw[i]) == 0)
-							return cpu.gpr[i]._16;
-					}
-					for(i = R_AL; i <= R_BH; i++){
-						if(strcmp(tokens[p].str + 1, regsb[i]) == 0)
-							return cpu.gpr[i]._8[1];
-					}
+
+		*success = true;
+		return val;
+	}
+	else if(tokens[s].type == '(' && tokens[e].type == ')') {
+		return eval(s + 1, e - 1, success);
+	}
+	else {
+		int dominated_op = find_dominated_op(s, e, success);
+		if(!*success) { return 0; }
+
+		int op_type = tokens[dominated_op].type;
+		if(op_type == '!' || op_type == NEG || op_type == REF) {
+			uint32_t val = eval(dominated_op + 1, e, success);
+			if(!*success) { return 0; }
+
+			switch(op_type) {
+				case '!': return !val;
+				case NEG: return -val;
+				case REF: return swaddr_read(val, 4);
+				default: assert(0);
 			}
-		}        	
-		else if(check_parentheses(p, q) == true){
-			uint32_t ans;
-			ans = eval(p + 1, q - 1);
-			return ans;
 		}
-		else{
-			int op;
-			op = find_dominant_op(p, q);
-			if(op == -1){
-				int p_type;
-				p_type = tokens[p].type;
-				ifmatch = true;
-				if(p_type == NEG || p_type == REF || p_type == '!'){
-					uint32_t val3;
-					val3 = eval(p + 1, q);
-					switch(p_type){
-						case NEG:
-							return -val3;
-						case REF:
-							return swaddr_read(val3, 4);
-						case '!':
-							return !val3;
-						default:
-							ifmatch = false;
-					}
-				}
-			}
-			uint32_t val1, val2;
-			val1 = eval(p, op - 1);
-			val2 = eval(op + 1, q);
-			switch(tokens[op].type){
-				case '+': 
-					return val1 + val2;
-				case '-': 
-					return val1 - val2;
-				case '*': 
-					return val1 * val2;
-				case '/': 
-					return val1 / val2;
-				case '%':
-					 return val1 % val2;
-				case EQ: 
-					return val1 == val2;
-				case NEQ: 
-					return val1 != val2;
-				case AND:
-					 return val1 && val2;
-				case OR:
-					 return val1 || val2;
-				default: 
-					ifmatch = false;
-			}
+
+		uint32_t val1 = eval(s, dominated_op - 1, success);
+		if(!*success) { return 0; }
+		uint32_t val2 = eval(dominated_op + 1, e, success);
+		if(!*success) { return 0; }
+
+		switch(op_type) {
+			case '+': return val1 + val2;
+			case '-': return val1 - val2;
+			case '*': return val1 * val2;
+			case '/': return val1 / val2;
+			case '%': return val1 % val2;
+			case EQ: return val1 == val2;
+			case NEQ: return val1 != val2;
+			case AND: return val1 && val2;
+			case OR: return val1 || val2;
+			default: assert(0);
 		}
 	}
-	return -1;
 }
+
+/* TODO: Expression evaluation end */
+
 uint32_t expr(char *e, bool *success) {
 	if(!make_token(e)) {
 		*success = false;
@@ -345,40 +243,37 @@ uint32_t expr(char *e, bool *success) {
 	}
 
 	/* TODO: Insert codes to evaluate the expression. */
-	//panic("please implement me");
-    int i;
-	int pre_type;
-	for(i = 0; i <= nr_token - 1; i++){
-		if(i == 0 && tokens[i].type == '-'){
-			tokens[i].type = NEG;
-		}
-		else if(i != 0 && tokens[i].type == '-'){
-			pre_type = tokens[i - 1].type;
-			if(pre_type == NUM || pre_type == HEXNUM || pre_type == ')' || pre_type == REGNAME){
-				tokens[i].type = '-';
+       	//panic("please implement me");
+	//return 0;
+        /* Detect REF and NEG tokens */
+	int i;
+	int prev_type;
+	for(i = 0; i < nr_token; i ++) {
+		if(tokens[i].type == '-') {
+			if(i == 0) {
+				tokens[i].type = NEG;
+				continue;
 			}
-			else {
+
+			prev_type = tokens[i - 1].type;
+			if( !(prev_type == ')' || prev_type == NUM || prev_type == REG) ) {
 				tokens[i].type = NEG;
 			}
 		}
-		if(i == 0 && tokens[i].type == '*'){
-			tokens[i].type = REF;
-		}
-		else if(i != 0 && tokens[i].type == '*'){
-			pre_type = tokens[i - 1].type;
-			if(pre_type == NUM || pre_type == HEXNUM || pre_type == ')' || pre_type == REGNAME){
-				tokens[i].type = '*';
+
+		else if(tokens[i].type == '*') {
+			if(i == 0) {
+				tokens[i].type = REF;
+				continue;
 			}
-			else{
+
+			prev_type = tokens[i - 1].type;
+			if( !(prev_type == ')' || prev_type == NUM || prev_type == REG) ) {
 				tokens[i].type = REF;
 			}
 		}
 	}
-	uint32_t ans;
-	ifmatch=true;
-	ans=eval(0,nr_token-1);
-	*success=ifmatch;
-	return ans;
-}
 
+	return eval(0, nr_token - 1, success);
+}
 

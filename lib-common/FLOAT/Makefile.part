@@ -8,7 +8,7 @@ FLOAT_A_OBJ := $(FLOAT_O) $(FLOAT_VFPRINTF_O)
 $(FLOAT): $(FLOAT_A_OBJ)
 	ar r $@ $^
 
-# TODO: complete the following rules
+# TODO: complete the following rules (Note: must use "/usr/bin/gcc-4.4" , "-fno-builtin" and "-fno-if-conversion" in compilation rules)
 
 $(FLOAT_O):
 

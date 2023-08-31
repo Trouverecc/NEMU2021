@@ -42,3 +42,40 @@ void reg_test() {
 	assert(eip_sample == cpu.eip);
 }
 
+void display_reg() {
+	int i;
+	for(i = 0; i < 8; i ++) {
+		printf("%s\t\t0x%08x\t\t%d\n", regsl[i], cpu.gpr[i]._32, cpu.gpr[i]._32);
+	}
+
+	printf("%s\t\t0x%08x\t\t%d\n", "eip", cpu.eip, cpu.eip);
+}
+
+uint32_t get_reg_val(const char *s, bool *success) {
+	int i;
+	*success = true;
+	for(i = 0; i < 8; i ++) {
+		if(strcmp(regsl[i], s) == 0) {
+			return reg_l(i);
+		}
+	}
+
+	for(i = 0; i < 8; i ++) {
+		if(strcmp(regsw[i], s) == 0) {
+			return reg_w(i);
+		}
+	}
+
+	for(i = 0; i < 8; i ++) {
+		if(strcmp(regsb[i], s) == 0) {
+			return reg_b(i);
+		}
+	}
+
+	if(strcmp("eip", s) == 0) {
+		return cpu.eip;
+	}
+
+	*success = false;
+	return 0;
+}
