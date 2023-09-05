@@ -6,7 +6,7 @@
 #include "data-mov/cltd.h"
 #include "data-mov/push.h"
 #include "data-mov/cmp.h"
-
+#include "data-mov/leave.h"
 
 #include "arith/adc.h"
 #include "arith/add.h"
@@ -26,6 +26,8 @@
 #include "control/je.h"
 #include "control/ret.h"
 #include "control/jbe.h"
+#include "control/jne.h"
+#include "control/jle.h"
 
 
 #include "logic/and.h"
