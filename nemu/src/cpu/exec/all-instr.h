@@ -9,6 +9,7 @@
 
 
 #include "arith/adc.h"
+#include "arith/add.h"
 #include "arith/dec.h"
 #include "arith/inc.h"
 #include "arith/neg.h"
@@ -24,6 +25,7 @@
 #include "control/call.h"
 #include "control/je.h"
 #include "control/ret.h"
+#include "control/jbe.h"
 
 
 #include "logic/and.h"
