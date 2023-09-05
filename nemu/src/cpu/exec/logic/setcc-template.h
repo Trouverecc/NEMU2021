@@ -1,6 +1,6 @@
 #include "cpu/exec/template-start.h"
 
-#define instr setne
+#define instr setcc
 
 static void do_execute () {
 	if(cpu.eflags.ZF==0)
