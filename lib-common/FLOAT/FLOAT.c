@@ -1,8 +1,22 @@
 #include "FLOAT.h"
 
+typedef union{
+	long long a;
+	struct{
+		int b :16;
+		int c :32;
+		int d :16;
+	};
+}fmulf;
+typedef union{
+	float a;
+	int b;
+}fbi;
+
 FLOAT F_mul_F(FLOAT a, FLOAT b) {
-	nemu_assert(0);
-	return 0;
+	fmulf ans;
+	ans.a = 1ll * a * b;
+	return ans.c;
 }
 
 FLOAT F_div_F(FLOAT a, FLOAT b) {
@@ -24,8 +38,9 @@ FLOAT F_div_F(FLOAT a, FLOAT b) {
 	 * out another way to perform the division.
 	 */
 
-	nemu_assert(0);
-	return 0;
+	FLOAT ans, temp;
+	asm volatile ("idiv %2" : "=a"(ans), "=d"(temp) : "r"(b), "a"(a << 16), "d"(a >> 16));
+	return ans;
 }
 
 FLOAT f2F(float a) {
@@ -39,13 +54,37 @@ FLOAT f2F(float a) {
 	 * performing arithmetic operations on it directly?
 	 */
 
-	nemu_assert(0);
-	return 0;
+	//return (FLOAT)(a * 65536.0);
+	fbi aa;
+	aa.a = a;
+	int s = (aa.b >> 31) & 1;
+	int zeros = 0;
+	int exp = (aa.b >> 23) & 0xff, E;
+	FLOAT ans = aa.b & 0x7fffff;
+	if(exp == 0xff) ans = 0x80000000;
+	else {
+		E = -126;
+		if(exp) {
+			ans |= 1 << 23;
+			E = exp - 0xff;
+		}
+		E -= 23;
+		if(E <= -32) ans >>= 32;
+		else if(E <= 0) ans >>= E;
+		else if(E <= 32) ans <<= E;
+		else ans <<= 32;
+	}
+	/*if(s == zeros) return ans;
+		ans = ~ans;
+		++ans;*/
+	ans = (ans ^ ((s << 31) >> 31)) + s;
+	return ans;
 }
 
 FLOAT Fabs(FLOAT a) {
-	nemu_assert(0);
-	return 0;
+	FLOAT ans = a;
+	if((a >> 31) & 1) ans = ~ans + 1;
+	return ans;
 }
 
 /* Functions below are already implemented */
