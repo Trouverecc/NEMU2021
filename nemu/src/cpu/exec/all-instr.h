@@ -40,7 +40,7 @@
 #include "logic/shrd.h"
 #include "logic/test.h"
 #include "logic/pop.h"
-
+#include "logic/setne.h"
 
 #include "string/rep.h"
 #include "string/scas.h"
