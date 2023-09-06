@@ -30,6 +30,10 @@
 #include "control/jle.h"
 #include "control/jg.h"
 #include "control/jl.h"
+#include "control/js.h"
+#include "control/jns.h"
+#include "control/jge.h"
+#include "control/ja.h"
 
 
 #include "logic/and.h"
@@ -48,6 +52,7 @@
 #include "string/scas.h"
 #include "string/stos.h"
 #include "string/movs.h"
+#include "string/lods.h"
 
 #include "misc/misc.h"
 
