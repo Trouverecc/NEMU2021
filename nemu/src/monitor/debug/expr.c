@@ -7,13 +7,13 @@
 #include <regex.h>
 #include <stdlib.h>
 
-uint32_t look_up_symtab(char *, bool *);
+//uint32_t look_up_symtab(char *, bool *);
 
 enum {
 	NOTYPE = 256, EQ
 
 	/* TODO: Add more token types */
-        , NUM, NEQ, OR, AND, REG, REF, NEG, ID
+        , NUM, NEQ, OR, AND, REG, REF, NEG//, ID
 };
 
 static struct rule {
@@ -40,8 +40,8 @@ static struct rule {
 	{"\\|\\|", OR},
 	{"!", '!'},
 	{"\\(", '('},
-	{"\\)", ')'} ,
-	{"[a-zA-Z_]{1,31}", ID},
+	{"\\)", ')'} //,
+	//{"[a-zA-Z_]{1,31}", ID},
 };
 
 #define NR_REGEX (sizeof(rules) / sizeof(rules[0]) )
@@ -98,7 +98,7 @@ static bool make_token(char *e) {
 				switch(rules[i].token_type) {
                                         case NOTYPE: break;
                                         case NUM:
-										case ID:
+										//case ID:
 					//default: panic("please implement me");
                                         case REG: sprintf(tokens[nr_token].str, "%.*s", substr_len, substr_start);
 					default: tokens[nr_token].type = rules[i].token_type;
