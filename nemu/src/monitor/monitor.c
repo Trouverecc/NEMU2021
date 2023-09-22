@@ -13,7 +13,7 @@ void load_elf_tables(int, char *[]);
 void init_regex();
 void init_wp_pool();
 void init_ddr3();
-void init_tlb();
+void init_cache();
 
 FILE *log_fp = NULL;
 
@@ -90,7 +90,7 @@ static void init_cs() {
 
 void restart() {
 	/* Perform some initialization to restart a program */
-	cpu.eflags.val=2;
+	//cpu.eflags.val=2;
 	init_cache();
 	init_cr0();
 	init_cs();
@@ -106,7 +106,7 @@ void restart() {
 	/* Set the initial instruction pointer. */
 
 	cpu.eip = ENTRY_START;
-
+    cpu.eflags.val=2;
 
 	/* Initialize DRAM. */
 	init_ddr3();

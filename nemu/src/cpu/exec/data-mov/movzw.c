@@ -1,15 +1,11 @@
 #include "cpu/exec/helper.h"
 
-
 #define DATA_BYTE 2
-#include "ret-template.h"
+#include "movzw-template.h"
 #undef DATA_BYTE
 
 #define DATA_BYTE 4
-#include "ret-template.h"
+#include "movzw-template.h"
 #undef DATA_BYTE
 
-
-
-make_helper_v(ret_near)
-make_helper_v(ret_i)
+make_helper_v(movzw_rm2r)
