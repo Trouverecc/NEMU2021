@@ -1,4 +1,6 @@
 #include "nemu.h"
+#include "memory/cache.h"
+#include "memory/tlb.h"
 
 #define ENTRY_START 0x100000
 
@@ -6,10 +8,12 @@ extern uint8_t entry [];
 extern uint32_t entry_len;
 extern char *exec_file;
 
+void init_tlb();
 void load_elf_tables(int, char *[]);
 void init_regex();
 void init_wp_pool();
 void init_ddr3();
+void init_tlb();
 
 FILE *log_fp = NULL;
 
@@ -74,8 +78,23 @@ static void load_entry() {
 	fclose(fp);
 }
 
+static void init_cr0() {
+	cpu.cr0.protect_enable=0;
+	cpu.cr0.paging=0;
+}
+
+static void init_cs() {
+	cpu.CS.base=0;
+	cpu.CS.limit=0xffffffff;
+}
+
 void restart() {
 	/* Perform some initialization to restart a program */
+	cpu.eflags.val=2;
+	init_cache();
+	init_cr0();
+	init_cs();
+	init_tlb();
 #ifdef USE_RAMDISK
 	/* Read the file with name `argv[1]' into ramdisk. */
 	init_ramdisk();
@@ -85,9 +104,12 @@ void restart() {
 	load_entry();
 
 	/* Set the initial instruction pointer. */
+
 	cpu.eip = ENTRY_START;
-	cpu.eflags.val=0x00000002;
+
 
 	/* Initialize DRAM. */
 	init_ddr3();
+
+	
 }

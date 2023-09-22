@@ -126,3 +126,12 @@ void dram_write(hwaddr_t addr, size_t len, uint32_t data) {
 		ddr3_write(addr + BURST_LEN, temp + BURST_LEN, mask + BURST_LEN);
 	}
 }
+
+/* ӣddr3_read&write */
+void call_ddr3_read(hwaddr_t addr, void *data){
+	ddr3_read(addr,data);
+}
+
+void call_ddr3_write(hwaddr_t addr, void *data, uint8_t *mask){
+	ddr3_write(addr,data,mask);
+}

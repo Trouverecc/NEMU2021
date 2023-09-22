@@ -41,16 +41,19 @@ static int cmd_si(char *args) {
 }
 
 /* TODO: Add info command */
-static int cmd_info(char *args) {
-	char *arg = strtok(NULL, " ");
-
-	if(arg != NULL) {
-		if(strcmp(arg, "r") == 0) {
-			display_reg();
-		}
-		else if(strcmp(arg, "w") == 0) {
+static int cmd_info(char *args) {  
+    char *arg=strtok(NULL," "); 
+	if(arg!=NULL){
+    	if(strcmp(arg,"r") == 0){  
+			int i=0; 
+        	while(i<8){
+            	printf("$%s \t0x%x \t%d\n",regsl[i],cpu.gpr[i]._32,cpu.gpr[i]._32); 
+				i++;
+			}  
+         	printf("$eip \t0x%x \t%d\n", cpu.eip, cpu.eip); 
+    	}  
+		else if(strcmp(arg,"w")==0)
 			list_watchpoint();
-		}
 	}
 	return 0;
 }
@@ -73,7 +76,7 @@ static int cmd_x(char *args) {
 					printf("0x%08x: ", addr);
 				}
 
-				printf("0x%08x ", swaddr_read(addr, 4));
+				printf("0x%08x ", swaddr_read(addr, 4, R_DS));
 				addr += 4;
 				if(i % 4 == 3) {
 					printf("\n");
@@ -141,10 +144,10 @@ static struct {
 	{ "q", "Exit NEMU", cmd_q }, 
 
 	/* TODO: Add more commands */
-        { "si", "Single step", cmd_si },
-        { "info", "info r - print register values; info w - show watch point state", cmd_info },
+    { "si", "Single step", cmd_si },
+    { "info", "info r - print register values; info w - show watch point state", cmd_info },
 	{ "x", "Examine memory", cmd_x },
-        { "p", "Evaluate the value of expression", cmd_p },
+    { "p", "Evaluate the value of expression", cmd_p },
 	{ "w", "Set watchpoint", cmd_w },
 	{ "d", "Delete watchpoint", cmd_d }
 

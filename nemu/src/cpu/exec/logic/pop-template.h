@@ -2,23 +2,14 @@
 
 #define instr pop
 
-static void do_execute () {
-	if (DATA_BYTE == 1)
-	{
-		swaddr_write (op_src->addr, 4 ,MEM_R(reg_l (R_ESP)));
-		MEM_W(reg_l (R_ESP) , 0);
-		reg_l (R_ESP) += 4;
-	}
-	else
-	{
-		OPERAND_W (op_src, MEM_R(REG (R_ESP)));
-		MEM_W(REG (R_ESP) , 0);
-		REG (R_ESP) += DATA_BYTE;
-	}
+static void do_execute(){
+	OPERAND_W(op_src,MEM_R(REG(R_ESP),2));
+    swaddr_write(reg_l(R_ESP), 4, 0, R_SS); 
+	reg_l(R_ESP) += 4; 
 	print_asm_template1();
 }
 
-#if DATA_BYTE == 2 || DATA_BYTE == 4
+#if DATA_BYTE == 2||DATA_BYTE==4
 make_instr_helper(r)
 make_instr_helper(rm)
 #endif

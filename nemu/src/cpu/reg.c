@@ -42,6 +42,16 @@ void reg_test() {
 	assert(eip_sample == cpu.eip);
 }
 
+void sreg_set(uint8_t id) {
+	lnaddr_t chart_addr=cpu.GDTR.base+((cpu.sreg[id].selector>>3)<<3);
+	sreg_info.p1=lnaddr_read(chart_addr,4);
+	sreg_info.p2=lnaddr_read(chart_addr+4,4);
+	cpu.sreg[id].base=sreg_info.b1+(sreg_info.b2<<16)+(sreg_info.b3<<24);
+	cpu.sreg[id].limit=sreg_info.lim1+(sreg_info.lim2<<16)+((uint32_t)0xfff<<24);
+	if(sreg_info.g==1)
+		cpu.sreg[id].limit<<=12;
+}
+
 void display_reg() {
 	int i;
 	for(i = 0; i < 8; i ++) {
@@ -55,27 +65,19 @@ uint32_t get_reg_val(const char *s, bool *success) {
 	int i;
 	*success = true;
 	for(i = 0; i < 8; i ++) {
-		if(strcmp(regsl[i], s) == 0) {
+		if(strcmp(regsl[i], s) == 0)
 			return reg_l(i);
-		}
 	}
-
 	for(i = 0; i < 8; i ++) {
-		if(strcmp(regsw[i], s) == 0) {
+		if(strcmp(regsw[i], s) == 0)
 			return reg_w(i);
-		}
 	}
-
 	for(i = 0; i < 8; i ++) {
-		if(strcmp(regsb[i], s) == 0) {
+		if(strcmp(regsb[i], s) == 0)
 			return reg_b(i);
-		}
 	}
-
-	if(strcmp("eip", s) == 0) {
+	if(strcmp("eip", s) == 0) 
 		return cpu.eip;
-	}
-
 	*success = false;
 	return 0;
 }
